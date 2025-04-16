@@ -1,6 +1,7 @@
 const messageList = document.getElementById('message-list');
 const messageInput = document.getElementById('message-input');
 const sendButton = document.getElementById('send-button');
+const loadingSpinner = document.getElementById('loading-spinner');
 
 let eventSource = null;
 let currentAssistantMessageDiv = null; // To stream into the same bubble
@@ -21,7 +22,7 @@ function addMessage(sender, text, type = 'message') {
     if (type === 'message_chunk' && sender === 'assistant' && currentAssistantMessageDiv) {
         currentAssistantMarkdown += text; // Append raw chunk to stored markdown
         currentAssistantMessageDiv.innerHTML = marked.parse(currentAssistantMarkdown); // Re-render markdown
-        messageList.scrollTop = messageList.scrollHeight; // Scroll down
+        //messageList.scrollTop = messageList.scrollHeight; // Scroll down
         return; // Don't create a new div
     }
 
@@ -77,20 +78,30 @@ function connectEventSource() {
                      if (currentAssistantMessageDiv && currentAssistantMarkdown) {
                          currentAssistantMessageDiv.innerHTML = marked.parse(currentAssistantMarkdown);
                      }
+                     // Ensure spinner is hidden on finish
+                     console.log("Hiding spinner: Received 'Finished' status."); // DEBUG
+                     loadingSpinner.classList.add('hidden'); // ADDED
+                     
                      currentAssistantMessageDiv = null;
                      currentAssistantMarkdown = ""; // Clear markdown buffer too
                      streamFinishedGracefully = true;
                  }
             } else if (data.type === 'error') {
-                 addMessage('assistant', data.content, 'error');
-                 currentAssistantMessageDiv = null; // Stop streaming on error
-                 currentAssistantMarkdown = ""; // Clear markdown buffer too
+                console.log("Hiding spinner: Received 'error' message type."); // DEBUG
+                loadingSpinner.classList.add('hidden');
+                addMessage('assistant', data.content, 'error');
+                currentAssistantMessageDiv = null; // Stop streaming on error
+                currentAssistantMarkdown = ""; // Clear markdown buffer too
             } else if (data.type === 'tool_confirm') {
-                 addMessage('system', `Tool Call Requested: ${data.tool_name} with args ${JSON.stringify(data.args)}. Confirmation UI needed.`, 'status');
-                 currentAssistantMessageDiv = null;
-                 currentAssistantMarkdown = "";
+                console.log("Hiding spinner: Received 'tool_confirm' message type."); // DEBUG
+                loadingSpinner.classList.add('hidden');
+                addMessage('system', `Tool Call Requested: ${data.tool_name} with args ${JSON.stringify(data.args)}. Confirmation UI needed.`, 'status');
+                currentAssistantMessageDiv = null;
+                currentAssistantMarkdown = "";
             } else if (data.type === 'message') { // Handle potential full messages if backend sends them
-                 addMessage('assistant', data.content, 'message');
+                console.log("Hiding spinner: Received 'message' message type (full message)."); // DEBUG
+                loadingSpinner.classList.add('hidden');
+                addMessage('assistant', data.content, 'message');
             }
 
         } catch (e) {
@@ -108,7 +119,9 @@ function connectEventSource() {
         if (!streamFinishedGracefully) {
             addMessage('system', 'Connection error or stream closed.', 'error');
         }
+        console.log("Hiding spinner: SSE onerror triggered."); // DEBUG
         eventSource.close();
+        loadingSpinner.classList.add('hidden'); // ADDED - Hide on connection error
          // Optionally try to reconnect after a delay
     };
     
@@ -125,6 +138,9 @@ async function sendMessage() {
     messageInput.value = '';
     adjustInputHeight(); // Reset height after sending
 
+    loadingSpinner.classList.remove('hidden'); // ADDED - Show spinner
+    messageList.scrollTop = messageList.scrollHeight;
+
     // Reconnect SSE before sending message to ensure it's ready
     connectEventSource(); 
 
@@ -140,6 +156,8 @@ async function sendMessage() {
         if (!response.ok) {
             const errorData = await response.json();
             console.error('Error sending message:', errorData);
+            console.log("Hiding spinner: Send message fetch response not OK."); // DEBUG
+            loadingSpinner.classList.add('hidden'); // ADDED - Hide on send error
             addMessage('system', `Error: ${errorData.error || response.statusText}`, 'error');
         } else {
             console.log("Message sent to backend successfully.");
@@ -147,6 +165,8 @@ async function sendMessage() {
         }
     } catch (error) {
         console.error('Network error sending message:', error);
+        console.log("Hiding spinner: Network error during send message fetch."); // DEBUG
+        loadingSpinner.classList.add('hidden'); // ADDED - Hide on network error
         addMessage('system', 'Network error sending message.', 'error');
     }
 }

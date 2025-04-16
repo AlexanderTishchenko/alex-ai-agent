@@ -103,6 +103,34 @@ body {
     background-color: #4a4b57;
 }
 
+.message-input-container {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
+
+/* ADDED SPINNER STYLES */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #09f;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin: 5px auto; /* Center it above the input */
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.hidden {
+    display: none;
+}
+/* END SPINNER STYLES */
+
 #message-input {
     flex-grow: 1;
     padding: 10px 15px;
