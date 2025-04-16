@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp_client_cli"
+version = "1.0.1"
+description = "Command line interface for MCP client"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Adhika Setya Pramudita", email = "adhika.setya.p@gmail.com" }
+]
+license = { text = "MIT" }
+dependencies = [
+    "langchain-anthropic>=0.3.0",
+    "langchain>=0.3.8",
+    "mcp>=1.0.0",
+    "python-dotenv>=1.0.1",
+    "langgraph>=0.2.53",
+    "langchain-openai>=0.2.10",
+    "langchain-google-genai>=2.0.7",
+    "aiosqlite>=0.20.0",
+    "langgraph-checkpoint-sqlite>=2.0.1",
+    "rich>=13.9.0",
+    "commentjson>=0.9.0",
+    "jsonschema-pydantic>=0.6",
+    "pywin32>=306; sys_platform == 'win32' or platform_system == 'Windows'",
+    "langgraph-prebuilt>=0.1.0",
+    "standard-imghdr>=3.13.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+clipboard = [
+    "pyperclip>=1.8.2",
+    "pngpaste; sys_platform == 'darwin' and python_version < '3.12'"
+]
+
+[project.urls]
+Homepage = "https://github.com/adhikasp/mcp_client_cli"
+Issues = "https://github.com/adhikasp/mcp_client_cli/issues"
+
+[project.scripts]
+llm = "mcp_client_cli.cli:main"

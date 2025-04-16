@@ -1,0 +1,14 @@
+flask
+# Dependencies from the original CLI project
+langchain
+langchain-core
+langgraph
+langchain-openai # Or other provider if needed
+aiosqlite
+anyio
+rich # Might not be strictly needed by the web app, but part of original core
+commentjson
+jsonschema_pydantic
+pydantic
+# Add other specific dependencies if needed (e.g., for specific tools or models)
+python-dotenv # Useful for managing API keys via .env file 
