@@ -1,4 +1,4 @@
-flask
+flask[async]
 # Dependencies from the original CLI project
 langchain
 langchain-core
@@ -12,3 +12,11 @@ jsonschema_pydantic
 pydantic
 # Add other specific dependencies if needed (e.g., for specific tools or models)
 python-dotenv # Useful for managing API keys via .env file 
+
+# ADDED for secure credential storage
+cryptography>=41.0.0 
+
+Flask-Dance
+google-auth-oauthlib
+authlib
+flask-login

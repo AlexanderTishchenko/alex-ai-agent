@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request, Response, stream_with_context, jsonify, session
+from flask import Flask, redirect, url_for, render_template, request, Response, stream_with_context, jsonify, session
+from dotenv import load_dotenv
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from authlib.integrations.flask_client import OAuth
 import asyncio
 import uuid
 from queue import Queue, Empty
@@ -8,15 +11,72 @@ import os
 from pathlib import Path
 import sys
 
-# Import the refactored agent runner
-from src.mcp_client_cli.agent_runner import AgentRunner  
+load_dotenv()  # Load environment variables from .env
 
-# Configure Flask app
-app = Flask(__name__)
-# Make sure templates and static folders are relative to app.py location
+app = Flask(__name__, static_url_path="/static")
 app.template_folder = os.path.join(os.path.dirname(__file__), 'templates')
 app.static_folder = os.path.join(os.path.dirname(__file__), 'static')
-app.secret_key = os.urandom(24) # Needed for session management
+app.secret_key = os.environ["FLASK_SECRET_KEY"]
+
+# --- Flask-Login setup ---
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
+
+class User(UserMixin):
+    """On production, store users in a DB."""
+    def __init__(self, id_, email, name, picture):
+        self.id = id_
+        self.email = email
+        self.name = name
+        self.picture = picture
+
+users: dict[str, User] = {}
+
+@login_manager.user_loader
+def load_user(user_id):
+    return users.get(user_id)
+
+# --- OAuth (Authlib) setup ---
+oauth = OAuth(app)
+google = oauth.register(
+    name="google",
+    client_id=os.environ["GOOGLE_CLIENT_ID"],
+    client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+
+    # access_token_url="https://oauth2.googleapis.com/token",
+    # authorize_url="https://accounts.google.com/o/oauth2/v2/auth",
+    api_base_url="https://www.googleapis.com/oauth2/v2/",
+    client_kwargs={"scope": "openid email profile"},
+)
+print("CID:", google.client_id)
+print("CSecret set:", bool(os.environ.get("GOOGLE_CLIENT_SECRET")))
+
+@app.route("/login")
+def login():
+    redirect_uri = url_for("auth_callback", _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route("/auth/google/callback")
+def auth_callback():
+    token = google.authorize_access_token()
+    resp = google.get("userinfo")
+    info = resp.json()
+    uid = info["id"]
+    users[uid] = User(uid, info["email"], info["name"], info["picture"])
+    login_user(users[uid])
+    session["session_id"] = session.get("session_id") or uid
+    return redirect(url_for("index"))
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
+
+# Import the refactored agent runner
+from src.mcp_client_cli.agent_runner import AgentRunner  
+from src.secure_config import secure_config
 
 # Dictionary to hold session-specific queues for SSE
 session_queues: dict[str, Queue] = {}
@@ -29,19 +89,19 @@ def run_async_in_thread(loop, coro):
 
 @app.route('/')
 def index():
-    # Generate a unique session ID for each new visit
+    if not current_user.is_authenticated:
+        return render_template('login.html')
+    # Generate a unique session ID for each visit
     if 'session_id' not in session:
         session['session_id'] = str(uuid.uuid4())
     session_id = session['session_id']
-    
-    # Create a queue for this session if it doesn't exist
     if session_id not in session_queues:
         session_queues[session_id] = Queue()
         print(f"Created queue for session: {session_id}")
-        
-    return render_template('index.html', session_id=session_id)
+    return render_template('index.html', session_id=session_id, user=current_user)
 
 @app.route('/send_message', methods=['POST'])
+@login_required
 def send_message():
     data = request.json
     user_message = data.get('message')
@@ -95,6 +155,7 @@ def send_message():
 #     return jsonify({"status": "Confirmation received"})
 
 @app.route('/stream/<session_id>')
+@login_required
 def stream(session_id):
     if session_id not in session_queues:
         print(f"[Stream {session_id}] Error: No queue found for session.")
@@ -147,6 +208,43 @@ def stream(session_id):
             pass # Keep queue for potential reconnection unless explicitly managed otherwise
 
     return Response(event_stream(), mimetype='text/event-stream')
+
+@app.route('/check_telegram_creds', methods=['GET'])
+@login_required
+def check_telegram_creds():
+    """Check if Telegram credentials exist."""
+    return jsonify({
+        'exists': secure_config.credentials_exist()
+    })
+
+@app.route('/save_telegram_creds', methods=['POST'])
+@login_required
+def save_telegram_creds():
+    """Save Telegram credentials."""
+    data = request.json
+    api_id = data.get('api_id')
+    api_hash = data.get('api_hash')
+    
+    if not api_id or not api_hash:
+        return jsonify({
+            'detail': 'API ID and API Hash are required'
+        }), 400
+    
+    try:
+        api_id = int(api_id)
+    except ValueError:
+        return jsonify({
+            'detail': 'API ID must be a valid integer'
+        }), 400
+    
+    if secure_config.save_credentials(api_id, api_hash):
+        return jsonify({
+            'status': 'Credentials saved successfully'
+        })
+    else:
+        return jsonify({
+            'detail': 'Failed to save credentials'
+        }), 500
 
 if __name__ == '__main__':
     # Ensure templates and static directories exist (optional, Flask usually handles this)

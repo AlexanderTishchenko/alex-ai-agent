@@ -173,4 +173,295 @@ body {
 #send-button svg {
     width: 20px;
     height: 20px;
+}
+
+/* ADDED MODAL STYLES */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.7); /* Darker overlay */
+}
+
+.modal-content {
+    background-color: #40414f; /* Dark background matching chat container */
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 25px;
+    border: 1px solid #343541; /* Dark border */
+    width: 80%; /* Could be more specific */
+    max-width: 400px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    color: #ececf1; /* Light text color */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    text-align: center;
+    color: #fff; /* White heading */
+}
+
+.modal-content label {
+    font-weight: bold;
+    color: #a0a0b0; /* Light gray for labels */
+}
+
+.modal-content input {
+    padding: 10px;
+    border: 1px solid #6b6c7b;
+    border-radius: 4px;
+    background-color: #343541; /* Dark input background */
+    color: #ececf1; /* Light text */
+    font-size: 1em;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal-content input:focus {
+    outline: none;
+    border-color: #8a8b9f;
+    box-shadow: 0 0 0 2px rgba(138, 139, 159, 0.2);
+}
+
+.modal-content button {
+    padding: 12px 20px;
+    background-color: #5a5b6d; /* Button color matching send button */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
+}
+
+.modal-content button:hover {
+    background-color: #7a7b8d; /* Hover color matching send button hover */
+}
+
+.modal-content p {
+    margin: 5px 0;
+    color: #a0a0b0; /* Light gray for description text */
+}
+
+.error-message {
+    color: #ff6b6b; /* Red for error messages */
+    font-size: 0.9em;
+    text-align: center;
+    padding: 8px;
+    background-color: rgba(255, 107, 107, 0.1);
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+/* Updated Modal Input Styles */
+.input-with-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    /* обрезаем всё, что заходит за рамки контейнера */
+    overflow: hidden;
+  }
+  
+  .input-container input {
+    /* вместо width:100% */
+    flex: 1 1 auto;
+    min-width: 0;           /* позволяет input сжиматься внутри flex */
+    padding-right: 2.5rem;  /* оставить место под глазик */
+    box-sizing: border-box;
+  }
+  
+  .input-container .toggle-password {
+    position: absolute;
+    top: 25%;
+    right: 0.75rem;         /* отступ от края */
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    /* подогнать «клик-зону» под размер иконки */
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;         /* убираем лишний внутренний отступ */
+  }
+
+.toggle-password:hover {
+    color: #ececf1;
+}
+
+.toggle-password .eye-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Add styles for the eye-slash icon when password is visible */
+.toggle-password[data-visible="true"] .eye-icon {
+    stroke-dasharray: 2;
+}
+
+/* END MODAL STYLES */
+
+/* Ensure hidden class uses important if needed, but display:none usually suffices */
+.hidden {
+    display: none;
 } 
+
+/* ---------- базовые переменные ---------- */
+:root {
+    --card-bg: #111;
+    --input-bg: #1c1c1c;
+    --input-border: #2a2a2a;
+    --text-main: #fff;
+    --text-muted: #8a8a8a;
+    --accent: #8ab4f8;      /* лёгкий синий как у Google dark‑UI */
+  }
+  
+  /* ---------- общий фон ---------- */
+  body.login-screen {
+    display: grid;
+    place-items: center;
+    height: 100vh;
+    margin: 0;
+    background: radial-gradient(circle at 50% 0%, #0b0b0b 0%, #000 70%);
+    color: var(--text-main);
+    font-family: Inter, "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  /* ---------- карточка ---------- */
+  .login-card {
+    width: 380px; /* +20px breathing‑room */
+    padding: 2.5rem 2rem 2.75rem;
+    background: var(--card-bg);
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 40px #000a;
+    backdrop-filter: blur(4px);
+  }
+  
+  .login-card .logo { width: 56px; margin-bottom: 1.25rem; }
+  
+  .login-card h1 {
+    font-size: 1.9rem;
+    margin-bottom: 2rem;
+    font-weight: 600;
+  }
+  
+  /* ---------- поля формы ---------- */
+  .login-card form input,
+  .login-card form button,
+  .google-btn {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all .2s ease;
+    outline: none;
+  }
+  
+  .login-card form input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-main);
+  }
+  
+  .login-card form input::placeholder { color: var(--text-muted); }
+  
+  .login-card form input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px #3b82f680;
+  }
+  
+  /* ---------- кнопка Continue ---------- */
+  .login-card form button {
+    margin-top: 0.6rem;
+    background: #fff;
+    color: #000;
+    border: none;
+    box-shadow: inset 0 0 0 1px #6662;
+  }
+  
+  .login-card form button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow:
+      0 2px 4px #0006,
+      inset 0 0 0 1px #6663;
+  }
+  
+  /* ---------- разделитель ---------- */
+  .divider {
+    position: relative;
+    margin: 1.7rem 0 1.2rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  
+  .divider::before,
+  .divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 46%;
+    height: 1px;
+    background: var(--input-border);
+  }
+  
+  .divider::before { left: 0; }
+  .divider::after  { right: 0; }
+  
+  /* ---------- Google‑кнопка ---------- */
+  .google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-main);
+    text-decoration: none;      /* убираем фиолетовый :visited */
+  }
+  
+  .google-btn:hover {
+    background: #232323;
+    border-color: #3a3a3a;
+    box-shadow: 0 0 0 2px #3a3a3a inset;
+  }
+  
+  .google-btn img { width: 20px; }
+  
+  .google-btn:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px #3b82f680;
+  }
+  
+  /* ---------- адаптив (мобила) ---------- */
+  @media (max-width: 420px) {
+    .login-card { width: 90vw; padding: 2rem 1.5rem; }
+  }
+  
+  .control{
+    width: 88%;
+    max-width: 300px;
+    margin-inline: auto;
+  }

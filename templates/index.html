@@ -8,6 +8,41 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+    <!-- ADDED: Telegram Credentials Modal -->
+    <div id="telegram-creds-modal" class="modal">
+        <div class="modal-content">
+            <h2>Enter Telegram Credentials</h2>
+            <p>These are needed for the Telegram MCP server to function.</p>
+            <div class="input-with-toggle">
+                <label for="telegram-api-id">API ID:</label>
+                <div class="input-container">
+                    <input type="password" id="telegram-api-id" name="telegram-api-id" required>
+                    <button type="button" class="toggle-password" data-target="telegram-api-id">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="input-with-toggle">
+                <label for="telegram-api-hash">API Hash:</label>
+                <div class="input-container">
+                    <input type="password" id="telegram-api-hash" name="telegram-api-hash" required>
+                    <button type="button" class="toggle-password" data-target="telegram-api-hash">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <button id="save-telegram-creds">Save</button>
+            <p id="creds-error" class="error-message hidden"></p>
+        </div>
+    </div>
+    <!-- END ADDED -->
+
     <div class="chat-container">
         <div class="chat-header">
             <h2>MCP Client</h2>
@@ -32,4 +67,4 @@
     </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-</html> 
+</html>

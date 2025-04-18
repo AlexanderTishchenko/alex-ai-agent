@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <title>Sign in</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="login-screen">
+  <div class="login-card">
+     <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="">
+     <h1>Sign in</h1>
+     <form>
+       <input class="control" type="email" placeholder="Your email address">
+       <button class="control" type="button">Continue</button>
+     </form>
+     <div class="divider">OR</div>
+     <a class="control google-btn" href="{{ url_for('login') }}">
+        <img src="{{ url_for('static', filename='google.svg') }}" alt="">
+        Continue with Google
+     </a>
+  </div>
+</body>
+</html>

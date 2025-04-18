@@ -3,6 +3,16 @@ const messageInput = document.getElementById('message-input');
 const sendButton = document.getElementById('send-button');
 const loadingSpinner = document.getElementById('loading-spinner');
 
+// ADDED: Modal elements
+const telegramCredsModal = document.getElementById('telegram-creds-modal');
+const saveCredsButton = document.getElementById('save-telegram-creds');
+const apiIdInput = document.getElementById('telegram-api-id');
+const apiHashInput = document.getElementById('telegram-api-hash');
+const credsErrorP = document.getElementById('creds-error');
+
+// DEBUG: Check if spinner element is found
+console.log("Spinner element:", loadingSpinner);
+
 let eventSource = null;
 let currentAssistantMessageDiv = null; // To stream into the same bubble
 let currentAssistantMarkdown = ""; // Store raw Markdown for the current bubble
@@ -201,6 +211,111 @@ messageInput.addEventListener('keypress', function(e) {
         e.preventDefault(); // Prevent newline in textarea
         sendMessage();
     }
+});
+
+// --- ADDED: Functions to handle Telegram Credentials Modal ---
+
+async function checkAndShowCredsModal() {
+    try {
+        // Check if creds already exist on backend
+        const response = await fetch('/check_telegram_creds');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.exists) {
+                console.log("Telegram credentials already exist.");
+                telegramCredsModal.style.display = 'none';
+                return; // Don't show modal if creds exist
+            }
+        }
+        
+        // Show modal if credentials don't exist
+        if (telegramCredsModal) {
+            console.log("Showing Telegram credentials modal.");
+            telegramCredsModal.style.display = 'block'; 
+        }
+
+    } catch (error) {
+        console.error('Error checking Telegram credentials:', error);
+        // Show modal on error to allow user to enter credentials
+        if (telegramCredsModal) {
+            telegramCredsModal.style.display = 'block'; 
+        }
+    }
+}
+
+async function saveTelegramCredentials() {
+    const apiId = apiIdInput.value.trim();
+    const apiHash = apiHashInput.value.trim();
+    credsErrorP.classList.add('hidden'); // Hide previous errors
+
+    if (!apiId || !apiHash) {
+        credsErrorP.textContent = 'API ID and API Hash are required.';
+        credsErrorP.classList.remove('hidden');
+        return;
+    }
+
+    try {
+        const response = await fetch('/save_telegram_creds', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ api_id: parseInt(apiId), api_hash: apiHash }), // Send as JSON
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            credsErrorP.textContent = `Error: ${errorData.detail || response.statusText}`;
+            credsErrorP.classList.remove('hidden');
+        } else {
+            console.log("Telegram credentials saved successfully.");
+            telegramCredsModal.style.display = 'none'; // Hide modal on success
+            // Optionally enable chat input if it was disabled
+        }
+    } catch (error) {
+        console.error('Network error saving credentials:', error);
+        credsErrorP.textContent = 'Network error saving credentials.';
+        credsErrorP.classList.remove('hidden');
+    }
+}
+
+// --- END ADDED --- 
+
+// Add password toggle functionality
+document.addEventListener('DOMContentLoaded', () => {
+    checkAndShowCredsModal(); 
+    if (saveCredsButton) {
+        saveCredsButton.addEventListener('click', saveTelegramCredentials);
+    }
+
+    // Add toggle password functionality
+    const toggleButtons = document.querySelectorAll('.toggle-password');
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const isVisible = button.getAttribute('data-visible') === 'true';
+            
+            // Toggle input type
+            input.type = isVisible ? 'password' : 'text';
+            // Update button state
+            button.setAttribute('data-visible', !isVisible);
+            
+            // Update eye icon
+            const eyeIcon = button.querySelector('.eye-icon');
+            if (isVisible) {
+                eyeIcon.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+            } else {
+                eyeIcon.innerHTML = `
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
+            }
+        });
+    });
 });
 
 // Initial connection (optional, can also connect on first message)
