@@ -64,6 +64,18 @@ This act as alternative client beside Claude Desktop. Additionally you can use a
 
 ## Usage
 
+### Scheduled Prompts (Task Scheduler)
+
+- Click the **Scheduler** button in the chat UI (top right).
+- Add a task: enter a prompt, pick a date and time, and choose recurrence (Doesn’t repeat, daily, weekday, weekly, monthly, or custom).
+- One-off tasks are sent as ISO-8601 timestamps; recurring as 5-field cron strings (all handled automatically by the UI).
+- Live preview shows the schedule in plain English (uses cronstrue for cron, local time display for ISO).
+- Validation ensures you can’t schedule in the past or with missing fields.
+- Vendor JS libraries required (via CDN in scheduler.html): `rrule.js`, `cronstrue`, `cron-converter`.
+- Tasks will POST to `/send_message` as if from you, and responses stream back as usual.
+- All scheduled tasks persist across restarts and can be managed in the Scheduler UI.
+- API: `/api/tasks` (CRUD, per-user session). See `src/tasks_routes.py`.
+
 ### Basic Usage
 
 ```bash

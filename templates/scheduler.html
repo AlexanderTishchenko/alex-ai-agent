@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task Scheduler</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='scheduler.js') }}"></script>
+</head>
+<body class="login-screen">
+  <div class="login-card" style="max-width:600px;">
+    <h1>Scheduler</h1>
+    <form id="taskForm">
+      <textarea id="msg" placeholder="Prompt message" required class="control" style="min-height:60px;"></textarea>
+      <div style="margin:12px 0 8px 0;">
+        <label for="dateInput">Date</label>
+        <input type="date" id="dateInput" class="control" aria-label="Date">
+        <label for="timeInput">Time</label>
+        <input type="time" id="timeInput" class="control" aria-label="Time">
+      </div>
+      <div style="margin-bottom:10px;">
+        <button id="recurrenceBtn" class="btn dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false" style="min-width:180px;">Doesn’t repeat ▾</button>
+        <ul id="recurrenceMenu" class="dropdown-menu" style="display:none;position:absolute;z-index:1001;">
+          <li data-rule="none">Doesn’t repeat</li>
+          <li data-rule="daily">Every day</li>
+          <li data-rule="weekday">Every weekday (Mon–Fri)</li>
+          <li data-rule="weekly">Every week</li>
+          <li data-rule="monthly">Every month</li>
+          <li data-rule="custom">Custom…</li>
+        </ul>
+      </div>
+      <div id="previewPill" class="pill" aria-live="polite" style="margin-bottom:12px;"></div>
+      <label style="display:block;margin:10px 0;">
+        <input type="checkbox" id="enabled" checked> Enabled
+      </label>
+      <button type="submit" class="control" id="submitBtn" disabled>Add/Update Task</button>
+      <!-- Custom Recurrence Modal Placeholder -->
+      <div id="customModal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span id="closeCustomModal" class="close">&times;</span>
+          <h3>Custom Recurrence</h3>
+          <div id="customRecurrenceContent"></div>
+        </div>
+      </div>
+    </form>
+    <div id="taskTableWrap" style="margin-top:2rem;"></div>
+  </div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 from flask import Flask, redirect, url_for, render_template, request, Response, stream_with_context, jsonify, session
 from dotenv import load_dotenv
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required as _login_required, current_user
 from authlib.integrations.flask_client import OAuth
 import asyncio
 import uuid
@@ -10,6 +10,12 @@ import threading
 import os
 from pathlib import Path
 import sys
+import threading, webbrowser
+# Import the refactored agent runner
+from src.mcp_client_cli.agent_runner import AgentRunner
+from src.secure_config import secure_config
+from src.scheduler import bootstrap as scheduler_bootstrap
+from src.tasks_routes import tasks_bp
 
 load_dotenv()  # Load environment variables from .env
 
@@ -36,47 +42,53 @@ users: dict[str, User] = {}
 def load_user(user_id):
     return users.get(user_id)
 
+# Feature flag for Google OAuth
+ENABLE_GOOGLE_OAUTH = os.getenv("ENABLE_GOOGLE_OAUTH", "true").lower() in ("1", "true", "yes")
+if ENABLE_GOOGLE_OAUTH:
+    login_required = _login_required
+else:
+    def login_required(fn):
+        return fn
+
 # --- OAuth (Authlib) setup ---
-oauth = OAuth(app)
-google = oauth.register(
-    name="google",
-    client_id=os.environ["GOOGLE_CLIENT_ID"],
-    client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+if ENABLE_GOOGLE_OAUTH:
+    oauth = OAuth(app)
+    google = oauth.register(
+        name="google",
+        client_id=os.environ["GOOGLE_CLIENT_ID"],
+        client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
+        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
 
-    # access_token_url="https://oauth2.googleapis.com/token",
-    # authorize_url="https://accounts.google.com/o/oauth2/v2/auth",
-    api_base_url="https://www.googleapis.com/oauth2/v2/",
-    client_kwargs={"scope": "openid email profile"},
-)
-print("CID:", google.client_id)
-print("CSecret set:", bool(os.environ.get("GOOGLE_CLIENT_SECRET")))
+        # access_token_url="https://oauth2.googleapis.com/token",
+        # authorize_url="https://accounts.google.com/o/oauth2/v2/auth",
+        api_base_url="https://www.googleapis.com/oauth2/v2/",
+        client_kwargs={"scope": "openid email profile"},
+    )
+    print("CID:", google.client_id)
+    print("CSecret set:", bool(os.environ.get("GOOGLE_CLIENT_SECRET")))
 
-@app.route("/login")
-def login():
-    redirect_uri = url_for("auth_callback", _external=True)
-    return google.authorize_redirect(redirect_uri)
+    @app.route("/login")
+    def login():
+        redirect_uri = url_for("auth_callback", _external=True)
+        return google.authorize_redirect(redirect_uri)
 
-@app.route("/auth/google/callback")
-def auth_callback():
-    token = google.authorize_access_token()
-    resp = google.get("userinfo")
-    info = resp.json()
-    uid = info["id"]
-    users[uid] = User(uid, info["email"], info["name"], info["picture"])
-    login_user(users[uid])
-    session["session_id"] = session.get("session_id") or uid
-    return redirect(url_for("index"))
+    @app.route("/auth/google/callback")
+    def auth_callback():
+        token = google.authorize_access_token()
+        resp = google.get("userinfo")
+        info = resp.json()
+        uid = info["id"]
+        users[uid] = User(uid, info["email"], info["name"], info["picture"])
+        login_user(users[uid])
+        session["session_id"] = session.get("session_id") or uid
+        return redirect(url_for("index"))
 
-@app.route("/logout")
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for("index"))
-
-# Import the refactored agent runner
-from src.mcp_client_cli.agent_runner import AgentRunner  
-from src.secure_config import secure_config
+    @app.route("/logout")
+    @login_required
+    def logout():
+        logout_user()
+        return redirect(url_for("index"))
+# end oauth feature toggle
 
 # Dictionary to hold session-specific queues for SSE
 session_queues: dict[str, Queue] = {}
@@ -89,7 +101,7 @@ def run_async_in_thread(loop, coro):
 
 @app.route('/')
 def index():
-    if not current_user.is_authenticated:
+    if ENABLE_GOOGLE_OAUTH and not current_user.is_authenticated:
         return render_template('login.html')
     # Generate a unique session ID for each visit
     if 'session_id' not in session:
@@ -246,6 +258,15 @@ def save_telegram_creds():
             'detail': 'Failed to save credentials'
         }), 500
 
+# --- Register scheduler and tasks blueprint ---
+scheduler_bootstrap(app)
+app.register_blueprint(tasks_bp, url_prefix='/api')
+
+@app.route('/scheduler')
+@login_required
+def scheduler_page():
+    return render_template('scheduler.html')
+
 if __name__ == '__main__':
     # Ensure templates and static directories exist (optional, Flask usually handles this)
     # Use absolute paths based on the script's location
@@ -258,11 +279,10 @@ if __name__ == '__main__':
     if src_path not in sys.path:
         sys.path.insert(0, src_path)
         print(f"Added {src_path} to sys.path")
-
-    # Needs python-dotenv if you use .env for API keys
-    from dotenv import load_dotenv
-    load_dotenv() # Load variables from .env file
     
+    # Automatically open default web browser to scheduler page
+    threading.Timer(1, lambda: webbrowser.open("http://127.0.0.1:5001/")).start()
+
     # Consider using a more production-ready server like gunicorn or waitress
     # For development:
-    app.run(debug=True, port=5001, threaded=True) # Use threaded for background tasks 
+    app.run(debug=True, port=5001, threaded=True) # Use threaded for background tasks

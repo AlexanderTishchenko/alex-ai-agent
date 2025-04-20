@@ -8,6 +8,13 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+    <button id="btnScheduler" class="btn btn-secondary" style="position:absolute;top:16px;right:16px;z-index:10;">Scheduler</button>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('btnScheduler');
+        if (btn) btn.onclick = () => window.open('/scheduler', 'Scheduler', 'width=620,height=720');
+      });
+    </script>
     <!-- ADDED: Telegram Credentials Modal -->
     <div id="telegram-creds-modal" class="modal">
         <div class="modal-content">

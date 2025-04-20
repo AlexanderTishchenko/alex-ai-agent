@@ -4,14 +4,21 @@ langchain
 langchain-core
 langgraph
 langchain-openai # Or other provider if needed
+langgraph-checkpoint-sqlite
 aiosqlite
 anyio
+mcp>=1.6.0
 rich # Might not be strictly needed by the web app, but part of original core
 commentjson
 jsonschema_pydantic
 pydantic
 # Add other specific dependencies if needed (e.g., for specific tools or models)
 python-dotenv # Useful for managing API keys via .env file 
+
+# Dev/test
+testfixtures
+pytest
+pytest-asyncio
 
 # ADDED for secure credential storage
 cryptography>=41.0.0 
@@ -20,3 +27,8 @@ Flask-Dance
 google-auth-oauthlib
 authlib
 flask-login
+apscheduler
+croniter
+sqlalchemy
+python-dateutil
+requests
