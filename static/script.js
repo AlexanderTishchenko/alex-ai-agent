@@ -316,6 +316,67 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // --- Settings modal logic ---
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsForm = document.getElementById('settings-form');
+    const vaultPathInput = document.getElementById('vault-path');
+    const modelSelect = document.getElementById('model-select');
+    const openaiKeyInput = document.getElementById('openai-key');
+    const cancelSettingsBtn = document.getElementById('cancel-settings');
+
+    function openSettings() {
+        fetch('/api/settings')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error loading settings: ' + data.error);
+                    return;
+                }
+                vaultPathInput.value = data.vault_path || '';
+                modelSelect.value = data.model || '';
+                openaiKeyInput.value = data.openai_api_key || '';
+                settingsModal.style.display = 'block';
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Failed to load settings');
+            });
+    }
+
+    function closeSettings() {
+        settingsModal.style.display = 'none';
+    }
+
+    settingsBtn.addEventListener('click', openSettings);
+    cancelSettingsBtn.addEventListener('click', closeSettings);
+
+    settingsForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const payload = {
+            vault_path: vaultPathInput.value,
+            model: modelSelect.value,
+            openai_api_key: openaiKeyInput.value
+        };
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (res.ok && result.status === 'ok') {
+                closeSettings();
+                alert('Settings saved successfully');
+            } else {
+                alert('Failed to save settings: ' + (result.error || 'unknown error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error saving settings');
+        }
+    });
 });
 
 // Initial connection (optional, can also connect on first message)

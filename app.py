@@ -99,6 +99,29 @@ def run_async_in_thread(loop, coro):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(coro)
 
+# def sse_with_error_handling(fn):
+#     def wrapper(*args, **kwargs):
+#         def gen():
+#             session_id = request.json.get("session_id") or kwargs.get("session_id")
+#             try:
+#                 # run the normal SSE generator
+#                 for event in fn(*args, **kwargs):
+#                     yield event
+#             except Exception as e:
+#                 # send the error as a chat message
+#                 payload = {
+#                     "type": "message",
+#                     "content": f"⚠️ Internal error: {e}",
+#                     "session_id": session_id
+#                 }
+#                 yield f"data: {json.dumps(payload)}\n\n"
+#             finally:
+#                 # always close the spinner
+#                 payload = {"type": "end", "session_id": session_id}
+#                 yield f"data: {json.dumps(payload)}\n\n"
+#         return Response(gen(), mimetype="text/event-stream")
+#     return wrapper
+
 @app.route('/')
 def index():
     if ENABLE_GOOGLE_OAUTH and not current_user.is_authenticated:
@@ -114,6 +137,7 @@ def index():
 
 @app.route('/send_message', methods=['POST'])
 @login_required
+#@sse_with_error_handling
 def send_message():
     data = request.json
     user_message = data.get('message')
@@ -182,16 +206,14 @@ def stream(session_id):
         q = session_queues[session_id]
         try:
             while True:
-                # Blocking wait with timeout
                 try:
                     item = q.get(timeout=30) # Check every 30 seconds
                     if item is None: # End signal
                         print(f"[Stream {session_id}] End signal received.")
-                        yield f"data: {json.dumps({'type': 'status', 'content': 'Finished'})}\n\n"
-                        # Remove agent task reference
+                        yield f"data: {json.dumps({'type': 'status', 'content': 'Finished', 'session_id': session_id})}\n\n"
                         if session_id in agent_tasks:
                             del agent_tasks[session_id]
-                        break 
+                        break
                     print(f"[Stream {session_id}] Yielding: {item}")
                     # Ensure the item is intended for this session (it should be by design here)
                     if item.get("session_id") == session_id:
@@ -200,24 +222,21 @@ def stream(session_id):
                          print(f"[Stream {session_id}] Warning: Received item for wrong session {item.get('session_id')}")
                 except Empty:
                     # Timeout reached, send keep-alive comment or just continue loop
-                     yield ": keepalive\n\n" 
+                    yield ": keepalive\n\n"
                     # Check if the agent task is still alive (optional)
                     # if session_id in agent_tasks and not agent_tasks[session_id].is_alive():
                     #     print(f"[Stream {session_id}] Agent task finished unexpectedly.")
                     #     break
         except GeneratorExit:
-             print(f"[Stream {session_id}] Client disconnected.")
+            print(f"[Stream {session_id}] Client disconnected.")
+        except Exception as e:
+            print(f"[Stream {session_id}] Unhandled error: {e}")
+            payload = {'type': 'message', 'content': f' Internal error: {e}', 'session_id': session_id}
+            yield f"data: {json.dumps(payload)}\n\n"
         finally:
-            # Clean up when client disconnects or stream ends
+            # Always send a final Finished status to close client spinner
+            yield f"data: {json.dumps({'type': 'status', 'content': 'Finished', 'session_id': session_id})}\n\n"
             print(f"[Stream {session_id}] Cleaning up queue.")
-            # Clear the queue for this session to avoid memory leaks if client disconnects
-            # while q.qsize() > 0:
-            #     try: q.get_nowait()
-            #     except Empty: break
-            # Optionally remove the queue entirely if session management dictates
-            # if session_id in session_queues:
-            #      del session_queues[session_id]
-            pass # Keep queue for potential reconnection unless explicitly managed otherwise
 
     return Response(event_stream(), mimetype='text/event-stream')
 
@@ -257,6 +276,45 @@ def save_telegram_creds():
         return jsonify({
             'detail': 'Failed to save credentials'
         }), 500
+
+# --- Settings API endpoints ---
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    config_path = os.path.join(os.path.dirname(__file__), 'mcp-server-config.json')
+    try:
+        with open(config_path) as f:
+            config = json.load(f)
+        vault_args = config.get('mcpServers', {}).get('obsidian', {}).get('args', [])
+        vault_path = vault_args[-1] if vault_args else ''
+        model = config.get('llm', {}).get('model', '')
+        openai_api_key = os.getenv('OPENAI_API_KEY', '')
+        return jsonify({'vault_path': vault_path, 'model': model, 'openai_api_key': openai_api_key})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings', methods=['POST'])
+def update_settings():
+    data = request.get_json() or {}
+    vault_path = data.get('vault_path')
+    model = data.get('model')
+    openai_api_key = data.get('openai_api_key')
+    config_path = os.path.join(os.path.dirname(__file__), 'mcp-server-config.json')
+    try:
+        with open(config_path) as f:
+            config = json.load(f)
+        obs_conf = config.setdefault('mcpServers', {}).setdefault('obsidian', {})
+        args = obs_conf.get('args', [])
+        prefix = args[:-1] if len(args) >= 1 else []
+        obs_conf['args'] = prefix + [vault_path]
+        config.setdefault('llm', {})['model'] = model
+        with open(config_path, 'w') as f:
+            json.dump(config, f, indent=2)
+        # override runtime API key
+        os.environ['OPENAI_API_KEY'] = openai_api_key or ''
+        os.environ['LLM_API_KEY'] = openai_api_key or ''
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # --- Register scheduler and tasks blueprint ---
 scheduler_bootstrap(app)

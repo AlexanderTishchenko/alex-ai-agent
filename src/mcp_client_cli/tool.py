@@ -81,6 +81,11 @@ class McpToolkit(BaseToolkit):
                 if tool.name in self.exclude_tools:
                     continue
                 self._tools.append(create_langchain_tool(tool, self._session, self))
+        # except ObsidianVaultError as e:
+        #     # turn vault‑validation failures into a ToolException
+        #     msg = f"❌ Not a valid Obsidian vault: {e}"
+        #     print(f"[McpToolkit:{self.name}] VaultError: {msg}")
+        #     raise ToolException(msg)
         except Exception as e:
             print(f"Error gathering tools for {self.server_param.command} {' '.join(self.server_param.args)}: {e}")
             raise e
@@ -135,8 +140,13 @@ class McpTool(BaseTool):
                 raise ToolException(content)
             return content
         except Exception as e:
-            print(f"[McpTool:{tool_name}] Error during execution: {e!r}")
-            raise
+            # Surface tool errors as chat text
+            if isinstance(e, ToolException):
+                print(f"[McpTool:{tool_name}] ToolException: {e}")
+                return str(e)
+            # Unexpected error
+            print(f"[McpTool:{tool_name}] Unexpected error: {e!r}")
+            return f"⚠️ Unexpected error in {tool_name}: {e}"
 
 def create_langchain_tool(
     tool_schema: types.Tool,

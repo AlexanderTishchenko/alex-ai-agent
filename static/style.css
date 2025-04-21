@@ -465,3 +465,105 @@ body {
     max-width: 300px;
     margin-inline: auto;
   }
+
+/* Settings button style */
+.settings-btn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: none;
+    border: none;
+    color: #ececf1;
+    font-size: 1.5em;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+/* Modal action buttons container */
+/* .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 1rem;
+} */
+
+/* ------------------------------------------------ */
+/* Modal background + centering */
+#settings-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: none; /* toggle to block when open */
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+  }
+  
+  /* The white “card” */
+  #settings-modal .modal-content {
+    background: #2f2f3a;
+    padding: 1.5rem;
+    border-radius: 8px;
+    width: 360px;
+    max-width: 90%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    color: #ececf1;
+  }
+  
+  /* Stack each label + control with consistent spacing */
+  #settings-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  #settings-form label {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  #settings-form input,
+  #settings-form select {
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    border: 1px solid #4a4a59;
+    border-radius: 4px;
+    background: #3f3f4f;
+    color: #ececf1;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Pull the very first label up a bit */
+  #settings-form label:first-of-type {
+    margin-top: 0;
+  }
+  
+  /* Buttons row */
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  
+  .modal-actions .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .modal-actions .btn#cancel-settings {
+    background: transparent;
+    color: #aaa;
+  }
+  
+  .modal-actions .btn#save-settings {
+    background: #5a5af1;
+    color: white;
+  }
+  

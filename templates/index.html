@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+    <button id="settings-btn" class="settings-btn" title="Settings">⚙️</button>
     <button id="btnScheduler" class="btn btn-secondary" style="position:absolute;top:16px;right:16px;z-index:10;">Scheduler</button>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -49,6 +50,31 @@
         </div>
     </div>
     <!-- END ADDED -->
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <h3>Settings</h3>
+            <form id="settings-form">
+                <label for="vault-path">Path to Obsidian vault</label>
+                <input type="text" id="vault-path" name="vault_path" required>
+                <label for="model-select">AI model</label>
+                <select id="model-select" name="model">
+                    <option value="gpt-4.1-nano" title="Input: $0.10\tOutput: $0.40\n1M tokens; fastest & cheapest; ideal for classification & autocomplete">gpt-4.1-nano</option>
+                    <option value="gpt-4o-mini" title="Input: $0.15\tOutput: $0.60\n128K tokens; cost-efficient; supports text & vision tasks">gpt-4o-mini</option>
+                    <option value="gpt-4.1-mini" title="Input: $0.40\tOutput: $1.60\n1M tokens; balanced performance; suitable for interactive applications">gpt-4.1-mini</option>
+                    <option value="o4-mini" title="Input: $1.10\tOutput: $4.40\n200K tokens; optimized for reasoning; excels in coding & visual tasks">o4-mini</option>
+                    <option value="gpt-4.1" title="Input: $2.00\tOutput: $8.00\n1M tokens; flagship model; enhanced coding & long context comprehension">gpt-4.1</option>
+                </select>
+                <label for="openai-key">OPENAI_API_KEY</label>
+                <input type="password" id="openai-key" name="openai_api_key">
+                <div class="modal-actions">
+                    <button type="button" id="cancel-settings" class="btn">Cancel</button>
+                    <button type="submit" id="save-settings" class="btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="chat-container">
         <div class="chat-header">

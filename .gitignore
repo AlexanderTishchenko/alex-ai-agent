@@ -10,7 +10,7 @@ wheels/
 .venv
 .env
 
-mcp-server-config.json
+#mcp-server-config.json
 
 .DS_Store
 repomix-output.md
@@ -149,6 +149,7 @@ celerybeat.pid
 .venv
 env/
 venv/
+venv-auto/
 ENV/
 env.bak/
 venv.bak/

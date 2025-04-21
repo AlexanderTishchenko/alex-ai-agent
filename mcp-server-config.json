@@ -1,0 +1,27 @@
+{
+  "systemPrompt": "You are an AI assistant with access to Obsidian and Telegram tools; use them to manage notes, search vaults, send/read Telegram messages. Use provided tools and vault names from 'list-vaults'. You must never send messages or take actions on the user\u2019s behalf without their explicit instruction. If you are uncertain about the user\u2019s intent, ask a clarifying question rather than assuming you should act.",
+  "llm": {
+    "provider": "openai",
+    "model": "o4-mini",
+    "temperature": 0.1
+  },
+  "mcpServers": {
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "obsidian-mcp",
+        "/Users/aleksandrtisenko/Documents/General-obdidian-vault/Test vault"
+      ]
+    },
+    "telegram-mcp": {
+      "command": "/Users/aleksandrtisenko/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/aleksandrtisenko/Documents/Code/telegram-mcp",
+        "run",
+        "main.py"
+      ]
+    }
+  }
+}
