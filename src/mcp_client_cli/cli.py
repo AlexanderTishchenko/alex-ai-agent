@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Simple llm CLI that acts as MCP client.
+Simple llm CLI that acts as TeleVault.
 """
 
 from datetime import datetime

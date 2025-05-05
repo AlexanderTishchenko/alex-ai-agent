@@ -84,20 +84,55 @@ timeInput.addEventListener('change', updatePreview);
 msgInput.addEventListener('input', updatePreview);
 
 recurrenceBtn.onclick = function(e) {
-  recurrenceMenu.style.display = recurrenceMenu.style.display === 'block' ? 'none' : 'block';
+  e.stopPropagation();
+  const isOpen = recurrenceMenu.style.display === 'block';
+  recurrenceMenu.style.display = isOpen ? 'none' : 'block';
+  recurrenceBtn.setAttribute('aria-expanded', !isOpen);
+  if (!isOpen) {
+    // Focus the first menu item for accessibility
+    const firstItem = recurrenceMenu.querySelector('li');
+    if (firstItem) firstItem.focus();
+  }
 };
 document.addEventListener('click', function(e) {
   if (!recurrenceMenu.contains(e.target) && e.target !== recurrenceBtn) {
     recurrenceMenu.style.display = 'none';
+    recurrenceBtn.setAttribute('aria-expanded', 'false');
   }
 });
-recurrenceMenu.querySelectorAll('li').forEach(li => li.addEventListener('click', e => {
-  recurrenceRule = e.target.dataset.rule;
-  recurrenceBtn.textContent = e.target.textContent + ' ▾';
-  recurrenceMenu.style.display = 'none';
-  if (recurrenceRule === 'custom') openCustomModal();
-  updatePreview();
-}));
+// Close on ESC
+recurrenceMenu.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    recurrenceMenu.style.display = 'none';
+    recurrenceBtn.setAttribute('aria-expanded', 'false');
+    recurrenceBtn.focus();
+  }
+});
+recurrenceMenu.querySelectorAll('li').forEach(li => {
+  li.tabIndex = 0; // Make focusable for accessibility
+  li.addEventListener('click', e => {
+    recurrenceRule = e.target.dataset.rule;
+    recurrenceBtn.textContent = e.target.textContent + ' ▾';
+    recurrenceMenu.style.display = 'none';
+    recurrenceBtn.setAttribute('aria-expanded', 'false');
+    if (recurrenceRule === 'custom') openCustomModal();
+    updatePreview();
+  });
+  li.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      li.click();
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (li.nextElementSibling) li.nextElementSibling.focus();
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (li.previousElementSibling) li.previousElementSibling.focus();
+    }
+  });
+});
 
 function openCustomModal() {
   document.getElementById('customModal').style.display = 'block';

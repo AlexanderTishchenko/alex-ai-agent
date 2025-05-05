@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mcp_client_cli"
 version = "1.0.1"
-description = "Command line interface for MCP client"
+description = "Command line interface for TeleVault"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [

@@ -3,7 +3,7 @@
   "llm": {
     "provider": "openai",
     "model": "o4-mini",
-    "temperature": 0.1
+    "temperature": 1
   },
   "mcpServers": {
     "obsidian": {
